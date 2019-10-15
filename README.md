@@ -67,4 +67,7 @@ Below is the modified code. The offending else condition logic is removed and in
 
 #### Patch
 I've included an xdelta3 patch that can be applied to the original libhidlbase.so as follows:
-```xdelta -d -s libhidlbase.patch libhidlbase.so libhidlbase.mod.so```
+```
+xdelta -d -s libhidlbase.patch libhidlbase.so libhidlbase.mod.so
+```
+However, it would need to be placed into ones ROM in some way, as this Magisk Module does.
