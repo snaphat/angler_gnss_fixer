@@ -11,7 +11,7 @@ A [Magisk](https://magiskmanager.com) module that fixes GNSS/GPS on the Nexus 6p
 git clone git@github.com:snaphat/angler_gnss_fixer.git
 ```
 
-## Technical Details
+## Technical Explanation
 The current build of the Pixel Experience 10 rom contains a bug that caused the GNSS (GPS) service to repeatedly crash when the GPS is put into use. This makes it unable to lock any satellite. The log of this error is shown below: 
 ```
 10-10 02:25:49.449  6425  6425 F DEBUG   : Build fingerprint: 'google/angler/angler:8.1.0/OPM3.171019.014/4503998:user/release-keys'
@@ -46,6 +46,8 @@ The current build of the Pixel Experience 10 rom contains a bug that caused the 
 10-10 02:25:49.466  6425  6425 F DEBUG   :       #10 pc 0000000000084d18  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+64) (BuildId: 56d83705c77e9d221c7ec590a8636f73)
 ```
 
+### Details
+
 More specifically, it appears an [off by one error in loc_eng_nmea_put_checksum()](https://android.googlesource.com/platform/hardware/qcom/gps/+/refs/heads/android10-release/msm8994/loc_api/libloc_api_50001/loc_eng_nmea.cpp#69) causes a check in [/system/lib64/libhidlbase.so:SetToExternal()](https://android.googlesource.com/platform/system/libhidl/+/refs/heads/android10-release/base/HidlSupport.cpp#260) to fail.
 
 Note, I'm not 100% sure where this code is located in the Pixel Experience 10 rom (I don't know where the src is hosted), but the dissassambled libraries contain the problem. I was unable to find a good way to directly patch libloc_eng.so (without changing the binary size, etc.) so instead I removed the error check in libhidlbase.so and then corrected the size directly there. Note the best spot, but it seems to do the trick.
@@ -53,3 +55,12 @@ Note, I'm not 100% sure where this code is located in the Pixel Experience 10 ro
 The following [commit](https://github.com/z3c-pie/device_sony_msm8974-common/commit/12543c3693e3d55602e3cacbec1f80b44bb80854#diff-62d39461a97da6ab4ced4ef122957333) in some other android repository shows a source fix for the problem, but the newer qcomm code in the Android 10 repository doesn't contain the fix for some reason.
 
 Also, notably, the reason Android 9 doesn't fail for the Nexus 6p is simply because the offending check doesn't exist in the older code base: [Android 9 msm8894 loc_eng_nmea.cpp](https://android.googlesource.com/platform/system/libhidl/+/refs/tags/android-9.0.0_r49/base/HidlSupport.cpp#255).
+
+### Images
+#### Original Basic Block
+Below is the original code shown in [Ghidra](https://ghidra-sre.org/). The check is done on line 15 and the code from line 20-25 cause an abort. Note, Ghidra's reversed source code is a little weird.
+![Original Basic Block](https://github.com/snaphat/angler_gnss_fixer/blob/assets/orig.png)
+
+#### Modified Basic Block
+Below is the modified code. The offending else condition logic is removed and instead replaced with an addition to the length and a bunch of no-op operations. Note the actual machine code shown on the left. Simple 4 byte instructions.
+![Modified Basic Block](https://github.com/snaphat/angler_gnss_fixer/blob/assets/mod.png)
