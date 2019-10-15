@@ -56,7 +56,7 @@ The following [commit](https://github.com/z3c-pie/device_sony_msm8974-common/com
 
 Also, notably, the reason Android 9 doesn't fail for the Nexus 6p is simply because the offending check doesn't exist in the older code base: [Android 9 msm8894 loc_eng_nmea.cpp](https://android.googlesource.com/platform/system/libhidl/+/refs/tags/android-9.0.0_r49/base/HidlSupport.cpp#255).
 
-### Images
+### Modification details
 #### Original Basic Block
 Below is the original code shown in [Ghidra](https://ghidra-sre.org/). The check is done on line 15 and the code from line 20-25 cause an abort. Note, Ghidra's reversed source code is a little weird.
 ![Original Basic Block](https://github.com/snaphat/angler_gnss_fixer/blob/assets/orig.png)
@@ -64,3 +64,7 @@ Below is the original code shown in [Ghidra](https://ghidra-sre.org/). The check
 #### Modified Basic Block
 Below is the modified code. The offending else condition logic is removed and instead replaced with an addition to the length and a bunch of no-op operations. Note the actual machine code shown on the left. Simple 4 byte instructions.
 ![Modified Basic Block](https://github.com/snaphat/angler_gnss_fixer/blob/assets/mod.png)
+
+#### Patch
+I've included an xdelta3 patch that can be applied to the original libhidlbase.so as follows:
+```xdelta -d -s libhidlbase.patch libhidlbase.so libhidlbase.mod.so```
