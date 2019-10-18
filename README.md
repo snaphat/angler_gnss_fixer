@@ -69,7 +69,7 @@ Notably, the reason Android 9 doesn't fail for the Nexus 6p is simply because th
   The basic blocks aren't shown because they aren't as interesting as the prior version. These simply optimize the destination registers of some move/add instructions to allow for the removal of some (unnecessary) sign extension instructions. This in turn frees room for an additional add instruction to be placed in the machine code in order to apply the bug corrections. The other two simply replace a mov with an add, and modify an addr operand to jump to strlcpy.
     
 ##### Patch
-The following script will patch a copy of _libloc_eng.so_ if it resided in the same directory. Note, autodoc.py must also be there.
+The following script will patch a copy of _libloc_eng.so_ if it resides in the same directory. Note, autodoc.py must also be there. If you'd like to see the difference between the vanilla and modified binaries, I recommend using Ghidra to loo at the original and modified functions. 
 ```
 python2 auto-doc.py
 ```
