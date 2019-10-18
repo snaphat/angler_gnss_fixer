@@ -48,18 +48,17 @@ The current build of the Pixel Experience 10 rom contains a bug that caused the 
 
 ### Details
 
-More specifically, it appears an [off by one error in loc_eng_nmea_put_checksum()](https://android.googlesource.com/platform/hardware/qcom/gps/+/refs/heads/android10-release/msm8994/loc_api/libloc_api_50001/loc_eng_nmea.cpp#69) causes a check in [/system/lib64/libhidlbase.so:SetToExternal()](https://android.googlesource.com/platform/system/libhidl/+/refs/heads/android10-release/base/HidlSupport.cpp#260) to fail.
+More specifically, off by one errors in [loc_eng_nmea_put_checksum()](https://github.com/z3c-pie/device_sony_msm8974-common/commit/12543c3693e3d55602e3cacbec1f80b44bb80854#diff-62d39461a97da6ab4ced4ef122957333) and [LocEngReportNmea()](https://github.com/z3c-pie/device_sony_msm8974-common/commit/6991f2087d166e0c89e4c2f4c34eb28d82d1bd74) found in [loc_eng_nmea.cpp](https://android.googlesource.com/platform/hardware/qcom/gps/+/refs/heads/android10-release/msm8994/loc_api/libloc_api_50001/loc_eng_nmea.cpp) cause a check in [/system/lib64/libhidlbase.so:SetToExternal()](https://android.googlesource.com/platform/system/libhidl/+/refs/heads/android10-release/base/HidlSupport.cpp#260) to fail. 
 
-Note, I'm not 100% sure where this code is located in the Pixel Experience 10 rom (I don't know where the src is hosted), but the dissassambled libraries contain the problem. I was unable to find a good way to directly patch libloc_eng.so (without changing the binary size, etc.) so instead I removed the error check in libhidlbase.so and then corrected the size directly there. Note the best spot, but it seems to do the trick.
+Note, version 1 of the patch implements a half-fix because at the time I was unable to find a good way to directly patch libloc_eng.so (without changing the binary size, etc.) so instead I removed the error check in libhidlbase.so and then corrected the size directly there. It still generates internal warnings bc the fix isn't complete. Version 1.1 corrects the issues with the original by modifying libloc_eng.so directly.
 
-The following [commit](https://github.com/z3c-pie/device_sony_msm8974-common/commit/12543c3693e3d55602e3cacbec1f80b44bb80854#diff-62d39461a97da6ab4ced4ef122957333) in some other android repository shows a source fix for the problem, but the newer qcomm code in the Android 10 repository doesn't contain the fix for some reason.
-
-Also, notably, the reason Android 9 doesn't fail for the Nexus 6p is simply because the offending check doesn't exist in the older code base: [Android 9 msm8894 loc_eng_nmea.cpp](https://android.googlesource.com/platform/system/libhidl/+/refs/tags/android-9.0.0_r49/base/HidlSupport.cpp#255).
+Notably, the reason Android 9 doesn't fail for the Nexus 6p is simply because the offending check doesn't exist in the older code base: [Android 9 msm8894 loc_eng_nmea.cpp](https://android.googlesource.com/platform/system/libhidl/+/refs/tags/android-9.0.0_r49/base/HidlSupport.cpp#255).
 
 ### Modification details
-
+----
 #### Version 1.1
-#### Modifications
+
+##### Modifications
   This patch modifies:
   * *LocEngReportNmea()* to fix the buffer overrun it contains.
     * Internally, modified to NULL terminate string.
@@ -75,6 +74,8 @@ The following script will patch a copy of _libloc_eng.so_ if it resided in the s
 python2 auto-doc.py
 ```
 However, it would need to be placed into ones ROM in some way, as this Magisk Module does.
+
+----
 
 #### Version 1
 ##### Original Basic Block
